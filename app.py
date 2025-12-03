@@ -1,6 +1,7 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 st.title("TVC vs Non-TVC Dashboard")
 
@@ -34,33 +35,42 @@ for year in range(1, years_to_retirement + 1):
 
 growth_ages = np.arange(current_age, retirement_age + 1)
 
-# Plot fund growth from current age
-fig_growth, ax = plt.subplots(figsize=(12, 5))
-ax.plot(growth_ages, tvc_growth, label='TVC Growth', color='blue')
-ax.plot(growth_ages, non_tvc_growth, label='Non-TVC Growth', color='orange')
-ax.set_xlabel('Age')
-ax.set_ylabel('Fund Value')
-ax.set_title('Fund Growth from Current Age to Retirement')
-ax.legend()
-ax.grid(True)
+# --- Plot fund growth from current age ---
+fig_growth = go.Figure()
 
-# Annotate difference at age 65 with vertical double-arrow line
+fig_growth.add_trace(go.Scatter(x=growth_ages, y=tvc_growth,
+                                mode='lines+markers', name='TVC Growth', line=dict(color='blue'), hovertemplate='TVC: Age %{x} = $%{y:,.0f}<extra></extra>'))
+fig_growth.add_trace(go.Scatter(x=growth_ages, y=non_tvc_growth,
+                                mode='lines+markers', name='Non-TVC Growth', line=dict(color='orange'), hovertemplate='Non-TVC: Age %{x} = $%{y:,.0f}<extra></extra>'))
+
+# Annotate difference at retirement
 x = retirement_age
 y1 = non_tvc_growth[-1]
 y2 = tvc_growth[-1]
 mid_y = (y1 + y2) / 2
 diff = y2 - y1
 
-# Draw vertical line with arrowheads
-ax.annotate('', xy=(x, y1), xytext=(x, y2),
-            arrowprops=dict(arrowstyle='<->', color='red', linewidth=2))
+# Choose color: green if positive, red if negative
+diff_color = "green" if diff >= 0 else "red"
 
-# Display value at center
-ax.text(x + 0.5, mid_y, f'${diff:,.0f}', va='center', ha='left', fontsize=20, color='red')
+fig_growth.add_shape(type="line",
+                     x0=x, y0=y1, x1=x, y1=y2,
+                     line=dict(color=diff_color, width=2),
+                     xref="x", yref="y")
 
-st.pyplot(fig_growth)
+fig_growth.add_annotation(x=x+5, y=mid_y,
+                          text=f"${diff:,.0f}",
+                          showarrow=False,
+                          font=dict(size=20, color=diff_color))
 
-# Calculations for breakeven dashboard
+fig_growth.update_layout(title="Fund Growth from Current Age to Retirement",
+                         xaxis_title="Age",
+                         yaxis_title="Fund Value",
+                         template="plotly_white")
+
+st.plotly_chart(fig_growth, use_container_width=True)
+
+# --- Calculations for breakeven dashboard ---
 tvc_final = []
 non_tvc_final = []
 difference = []
@@ -81,33 +91,37 @@ for start_age in start_ages:
 breakeven_index = next((i for i, diff in enumerate(difference) if diff >= 0), None)
 breakeven_age = start_ages[breakeven_index] if breakeven_index is not None else None
 
-# Plotting breakeven dashboard
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True, gridspec_kw={'height_ratios': [2, 1]})
+# --- Plotting breakeven dashboard ---
+fig_breakeven = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                              row_heights=[0.4, 0.6],
+                              subplot_titles=("Portfolio Value vs Initial Investment Age",
+                                              "Difference in Final Value (TVC - Non-TVC)"))
 
-# Top plot: Portfolio values
-ax1.plot(start_ages, tvc_final, label='TVC Final Value', color='blue')
-ax1.plot(start_ages, non_tvc_final, label='Non-TVC Final Value', color='orange')
-ax1.set_ylabel('Portfolio Value at Age 65')
-ax1.legend(loc='upper right')
-ax1.grid(True)
-ax1.set_title('Portfolio Value vs Initial Investment Age')
+# Top plot
+fig_breakeven.add_trace(go.Scatter(x=start_ages, y=tvc_final,
+                                   mode='lines+markers', name='TVC Final Value', line=dict(color='blue'), hovertemplate='Age %{x} = $%{y:,.0f}<extra></extra>'),
+                        row=1, col=1)
+fig_breakeven.add_trace(go.Scatter(x=start_ages, y=non_tvc_final,
+                                   mode='lines+markers', name='Non-TVC Final Value', line=dict(color='orange'), hovertemplate='Age %{x} = $%{y:,.0f}<extra></extra>'),
+                        row=1, col=1)
 
-# Annotate breakeven
 if breakeven_age is not None:
-    ax1.axvline(breakeven_age, color='gray', linestyle='--')
-    ax1.text(breakeven_age + 0.5, max(tvc_final) * 0.8,
-             f'Breakeven at age {breakeven_age}', color='black')
+    fig_breakeven.add_vline(x=breakeven_age, line=dict(color="gray", dash="dash"), row=1, col=1)
+    fig_breakeven.add_annotation(x=breakeven_age+0.5, y=max(tvc_final)*0.8,
+                                 text=f"Breakeven at age {breakeven_age}",
+                                 showarrow=False, row=1, col=1,
+                                 font=dict(size=18, color="black"))
 
-# Bottom plot: Difference
+# Bottom plot
 colors = ['green' if d >= 0 else 'red' for d in difference]
-ax2.bar(start_ages, difference, color=colors, alpha=0.6)
-ax2.set_ylabel('TVC - Non-TVC Difference')
-ax2.set_xlabel('Initial Investment Age')
-ax2.grid(True)
-ax2.set_title('Difference in Final Value (TVC - Non-TVC)')
+fig_breakeven.add_trace(go.Bar(x=start_ages, y=difference, marker_color=colors, name="Difference", hovertemplate='Age %{x} = $%{y:,.0f}<extra></extra>'),
+                        row=2, col=1)
 
-# Auto-scale Y-axis
 max_diff = max(abs(d) for d in difference)
-ax2.set_ylim(-max_diff * 1.2, max_diff * 1.2)
+fig_breakeven.update_yaxes(range=[-max_diff*1.2, max_diff*1.2], row=2, col=1)
 
-st.pyplot(fig)
+fig_breakeven.update_layout(height=700, template="plotly_white",
+                            xaxis_title="Initial Investment Age",
+                            yaxis_title="Portfolio Value at Age 65")
+
+st.plotly_chart(fig_breakeven, use_container_width=True)
