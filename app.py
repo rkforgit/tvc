@@ -3,6 +3,15 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
 st.title("TVC vs Non-TVC Dashboard")
 
 # Sidebar inputs
@@ -139,4 +148,5 @@ fig_breakeven.update_layout(height=700, template="plotly_white",
                             yaxis_title="Portfolio Value at Age 65")
 
 st.plotly_chart(fig_breakeven, use_container_width=True)
+
 
