@@ -124,7 +124,7 @@ if breakeven_age is not None:
     fig_breakeven.add_annotation(x=breakeven_age+0.5, y=max(tvc_final)*0.8,
                                  text=f"Breakeven at age {breakeven_age}",
                                  showarrow=False, row=1, col=1,
-                                 font=dict(size=18, color="black"))
+                                 font=dict(size=18, color="red"))
 
 # Bottom plot
 colors = ['green' if d >= 0 else 'red' for d in difference]
@@ -139,3 +139,4 @@ fig_breakeven.update_layout(height=700, template="plotly_white",
                             yaxis_title="Portfolio Value at Age 65")
 
 st.plotly_chart(fig_breakeven, use_container_width=True)
+
