@@ -14,12 +14,48 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 
 st.title("TVC vs Non-TVC Dashboard")
 
-# Sidebar inputs
+# --- Preset scenarios ---
+scenarios = {
+    "Baseline": {
+        "expected_return": 0.07,
+        "fee_tvc": 0.008,
+        "tax_saving_percent": 0.17,
+        "current_age": 25
+    },
+    "Bonus Unit Rebate": {
+        "expected_return": 0.07,
+        "fee_tvc": 0.008,
+        "tax_saving_percent": 0.195,
+        "current_age": 25
+    },
+    "Stock God": {
+        "expected_return": 0.20,
+        "fee_tvc": 0.10,
+        "tax_saving_percent": 0.17,
+        "current_age": 25
+    },
+    "MPF Lower Fee": {
+        "expected_return": 0.07,
+        "fee_tvc": 0.004,
+        "tax_saving_percent": 0.17,
+        "current_age": 15
+    }
+}
+
+# Dropdown for scenario selection
+selected_scenario = st.selectbox("Choose a preset scenario", list(scenarios.keys()))
+
+# Load parameters from scenario
+params = scenarios[selected_scenario]
+
+# Sidebar inputs (still adjustable after scenario selection)
 st.sidebar.header("Investment Parameters")
-expected_return = st.sidebar.slider("Expected Annual Return Before Fee (%)", 0.0, 15.0, 7.0) / 100
-fee_tvc = st.sidebar.number_input("TVC Annual Fee (%)", value=0.8) / 100
-tax_saving_percent = st.sidebar.number_input("Tax Saving on TVC (%)", value=17) / 100
-current_age = st.sidebar.number_input("Current Age", value=25)
+expected_return = st.sidebar.slider("Expected Annual Return Before Fee (%)", 0.0, 20.0,
+                                    params["expected_return"]*100) / 100
+fee_tvc = st.sidebar.number_input("TVC Annual Fee (%)", value=params["fee_tvc"]*100) / 100
+tax_saving_percent = st.sidebar.number_input("Tax Saving on TVC (%)", value=params["tax_saving_percent"]*100) / 100
+current_age = st.sidebar.number_input("Current Age", value=params["current_age"])
+
 
 base_investment = 60000
 fee_non_tvc = 0
@@ -148,5 +184,3 @@ fig_breakeven.update_layout(height=700, template="plotly_white",
                             yaxis_title="Portfolio Value at Age 65")
 
 st.plotly_chart(fig_breakeven, use_container_width=True)
-
-
