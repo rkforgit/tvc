@@ -33,8 +33,9 @@ scenarios = {
     }
 }
 
-# Dropdown for scenario selection
-selected_scenario = st.selectbox("Choose a preset scenario", list(scenarios.keys()))
+# Sidebar dropdown for scenario selection
+st.sidebar.header("Preset Scenarios")
+selected_scenario = st.sidebar.selectbox("Choose a preset scenario", list(scenarios.keys()))
 
 # Load parameters from scenario
 params = scenarios[selected_scenario]
@@ -175,4 +176,5 @@ fig_breakeven.update_layout(height=700, template="plotly_white",
                             yaxis_title="Portfolio Value at Age 65")
 
 st.plotly_chart(fig_breakeven, use_container_width=True)
+
 
