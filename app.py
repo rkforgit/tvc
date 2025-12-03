@@ -43,6 +43,20 @@ fig_growth.add_trace(go.Scatter(x=growth_ages, y=tvc_growth,
 fig_growth.add_trace(go.Scatter(x=growth_ages, y=non_tvc_growth,
                                 mode='lines+markers', name='Non-TVC Growth', line=dict(color='orange'), hovertemplate='Non-TVC: Age %{x} = $%{y:,.0f}<extra></extra>'))
 
+# Add invisible trace for difference
+diff_values = np.array(tvc_growth) - np.array(non_tvc_growth)
+fig_growth.add_trace(go.Scatter(
+    x=growth_ages,
+    y=diff_values,
+    mode='markers',
+    name='Difference',
+    marker=dict(opacity=0),  # invisible
+    hovertemplate='Age %{x}<br>TVC = $%{customdata[0]:,.0f}<br>'
+                  'Non-TVC = $%{customdata[1]:,.0f}<br>'
+                  'Difference = $%{customdata[2]:,.0f}<extra></extra>',
+    customdata=np.stack([tvc_growth, non_tvc_growth, diff_values], axis=-1)
+))
+
 # Annotate difference at retirement
 x = retirement_age
 y1 = non_tvc_growth[-1]
